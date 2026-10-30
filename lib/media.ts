@@ -40,8 +40,9 @@ export async function compressImage(
 }
 
 /**
- * Transcodes a video file on disk to H.264 MP4 capped at 1080, never above the source size.
- * Returns null when the server should keep the original (ffmpeg missing, failure, no gain).
+ * Transcodes a video file on disk to universally-playable 8-bit H.264 MP4 capped at 1080.
+ * Order: transcode → fast remux (moov to front on its own; keeps any codec playable-streamable)
+ * → null when even the remux fails. Never returns the same non-faststart raw file.
  */
 export async function compressVideoFile(
   inputPath: string,
@@ -50,38 +51,62 @@ export async function compressVideoFile(
   const ffmpegBinary: string | null = ffmpegPath;
   if (!ffmpegBinary) return null;
   const outputPath = join(inputPath, "..", "output.mp4");
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const ff = spawn(
-        ffmpegBinary,
-        [
-          "-y",
-          "-i", inputPath,
-          "-c:v", "libx264",
-          "-crf", String(VIDEO_CRF),
-          "-preset", "veryfast",
-          "-vf", VIDEO_SCALE_FILTER,
-          "-c:a", "aac",
-          "-b:a", "128k",
-          "-movflags", "+faststart",
-          "-f", "mp4",
-          outputPath,
-        ],
-        { stdio: ["ignore", "ignore", "ignore"] as const },
-      );
+  const transcodeArgs = [
+    "-y",
+    "-i", inputPath,
+    "-c:v", "libx264",
+    "-crf", String(VIDEO_CRF),
+    "-preset", "veryfast",
+    "-pix_fmt", "yuv420p",
+    "-profile:v", "high",
+    "-vf", VIDEO_SCALE_FILTER,
+    "-c:a", "aac",
+    "-b:a", "128k",
+    "-movflags", "+faststart",
+    "-f", "mp4",
+    outputPath,
+  ];
+  const remuxArgs = [
+    "-y",
+    "-i", inputPath,
+    "-c", "copy",
+    "-c:a", "aac",
+    "-b:a", "128k",
+    "-movflags", "+faststart",
+    "-f", "mp4",
+    outputPath,
+  ];
+
+  const runFfmpeg = (args: string[]) =>
+    new Promise<void>((resolve, reject) => {
+      const ff = spawn(ffmpegBinary, args, {
+        stdio: ["ignore", "ignore", "ignore"] as const,
+      });
       ff.on("error", () => reject(new Error("ffmpeg failed")));
       ff.on("close", (code: number | null) =>
         code === 0 ? resolve() : reject(new Error(`ffmpeg exited ${code}`)),
       );
     });
+
+  try {
+    await runFfmpeg(transcodeArgs);
     const buffer = await readFile(outputPath);
     if (buffer.byteLength === 0 || buffer.byteLength >= originalSize) {
-      return null;
+      throw new Error("transcode produced no smaller file");
     }
     return buffer;
   } catch (error) {
-    console.error("video compression failed, keeping original", error);
-    return null;
+    console.error("video transcode failed, trying fast remux", error);
+    try {
+      await rm(outputPath, { force: true });
+      await runFfmpeg(remuxArgs);
+      const buffer = await readFile(outputPath);
+      if (buffer.byteLength === 0) throw new Error("remux produced empty file");
+      return buffer;
+    } catch (remuxError) {
+      console.error("fast remux also failed, keeping original", remuxError);
+      return null;
+    }
   } finally {
     await rm(outputPath, { force: true });
   }
