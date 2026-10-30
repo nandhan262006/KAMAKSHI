@@ -79,22 +79,12 @@ export default async function FilmsPage() {
 
       <section className="border-y border-border bg-muted/40">
         <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-          <div className="flex max-w-2xl flex-col gap-4">
-            <h2 className="font-display text-4xl leading-tight text-foreground sm:text-5xl">
-              Before you book, watch these.
-            </h2>
-            <p className="text-pretty text-muted-foreground">
-              Photography ఎంచుకోవడం కేవలం price లేదా camera ఆధారంగా కాకుండా,
-              quality • experience • editing • data safety • final delivery
-              ఆధారంగా ఎంచుకోవడం ముఖ్యం.
-            </p>
-          </div>
           {previews.length === 0 ? (
-            <p className="mt-12 py-8 text-center text-sm text-muted-foreground">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               Previews are being prepared — check back soon.
             </p>
           ) : (
-            <div className="mt-12 grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               {previews.map((film, index) => {
                 const ytId = youtubeVideoId(film.youtube);
                 if (!ytId) return null;
