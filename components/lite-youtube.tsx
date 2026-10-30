@@ -28,9 +28,17 @@ export function LiteYouTube({ id, title }: { id: string; title: string }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+        src={`https://i.ytimg.com/vi/${id}/maxresdefault.jpg`}
         alt=""
         loading="lazy"
+        onError={(e) => {
+          // Some uploads only ship a 480×360 HQ thumb — fall back gracefully.
+          const img = e.currentTarget;
+          if (!img.dataset.fallback) {
+            img.dataset.fallback = "1";
+            img.src = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+          }
+        }}
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
       />
       <span className="absolute inset-0 bg-black/0 transition-colors duration-300 group-hover:bg-black/15" />
