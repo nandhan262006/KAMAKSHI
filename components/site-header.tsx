@@ -33,7 +33,7 @@ export function SiteHeader() {
       }`}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
-        <Link href="/" aria-label="Kamakshi Cinema Photography — home" className="w-fit">
+        <Link href="/#top" aria-label="Kamakshi Cinema Photography — home" className="w-fit">
           <Image
             src="/mainlogo.png"
             alt="Kamakshi Cinema Photography"
