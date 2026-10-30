@@ -2,25 +2,55 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1a1518;
+  --muted: #f5f2f4;
+  --muted-foreground: #6d626b;
+  --border: #e8e2e6;
+  --primary: #ec1e8c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-cormorant);
+  --font-telugu: var(--font-noto-telugu);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), var(--font-noto-telugu), Arial, Helvetica,
+    sans-serif;
+}
+
+::selection {
+  background: rgb(236 30 140 / 0.18);
+}
+
+/* Studio CMS admin shell */
+.admin-shell {
+  font-family: var(--font-jakarta), var(--font-geist-sans), system-ui,
+    Arial, sans-serif;
+}
+
+.admin-shell button,
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea {
+  font-family: inherit;
+}
+
+.admin-shell .font-display {
+  font-family: var(--font-cormorant), georgia, serif;
 }

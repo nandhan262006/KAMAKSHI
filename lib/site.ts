@@ -1,0 +1,41 @@
+/**
+ * Single source of truth for brand + site URLs used by
+ * metadata, robots, sitemap, JSON-LD schema and llms.txt.
+ */
+export const site = {
+  url: "https://kamakshicinemaphotography.com",
+  name: "Kamakshi Cinema Photography",
+  shortName: "Kamakshi",
+  tagline:
+    "Wedding photography & cinematography — RAW capture, in-house editing, true 4K delivery and double data backup.",
+  phone: "+919500138281",
+  phoneDisplay: "+91 95001 38281",
+  whatsapp: "https://wa.me/919500138281",
+  logo: "/mainlogo.png",
+  logoSquare: "/justlogo.png",
+  geo: { lat: 14.444054480888791, lng: 79.97324707582676 },
+  socials: [
+    "https://www.instagram.com/kamakshi_cinema_photography_/",
+    "https://www.youtube.com/channel/UCV7EmcbAaxnVrC_nMOPCFlg",
+    "https://g.co/kgs/QfFt37y",
+  ],
+  areaServed: ["Andhra Pradesh", "Telangana", "Tamil Nadu", "Karnataka", "India"],
+  knowsAbout: [
+    "Wedding photography",
+    "Wedding cinematography",
+    "Candid photography",
+    "Aerial drone coverage",
+    "Live streaming of events",
+    "RAW photo workflows",
+    "LOG and 10-bit video production",
+    "4K colour grading",
+  ],
+} as const;
+
+export const ABSOLUTE_LOGO_URL = `${site.url}${site.logo}`;
+export const ABSOLUTE_LOGO_SQUARE_URL = `${site.url}${site.logoSquare}`;
+
+/** Turns a stored src (/downloads/… or an R2/CDN URL) into an absolute URL. */
+export function absoluteMediaUrl(src: string): string {
+  return /^https?:\/\//i.test(src) ? src : `${site.url}${src}`;
+}
