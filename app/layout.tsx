@@ -109,9 +109,11 @@ function SiteGraph() {
               telephone: site.phone,
               address: {
                 "@type": "PostalAddress",
-                addressLocality: "Nellore",
-                addressRegion: "Andhra Pradesh",
-                addressCountry: "IN",
+                streetAddress: site.address.street,
+                addressLocality: site.address.locality,
+                addressRegion: site.address.region,
+                postalCode: site.address.postalCode,
+                addressCountry: site.address.country,
               },
               geo: {
                 "@type": "GeoCoordinates",

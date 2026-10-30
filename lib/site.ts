@@ -11,6 +11,16 @@ export const site = {
   phone: "+919500138281",
   phoneDisplay: "+91 95001 38281",
   whatsapp: "https://wa.me/919500138281",
+  address: {
+    street:
+      "Beside Raveendrabharathi School, Fathe Khan Peta, Ramesh Reddy Nagar",
+    locality: "Nellore",
+    region: "Andhra Pradesh",
+    postalCode: "524003",
+    country: "IN",
+  },
+  addressLine: "Beside Raveendrabharathi School, Fathe Khan Peta, Ramesh Reddy Nagar, Nellore, Andhra Pradesh 524003",
+  hours: "Open · Closes 8 pm",
   logo: "/mainlogo.png",
   logoSquare: "/justlogo.png",
   geo: { lat: 14.444054480888791, lng: 79.97324707582676 },

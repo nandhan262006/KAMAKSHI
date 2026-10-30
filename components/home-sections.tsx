@@ -342,6 +342,17 @@ function Explore() {
             className="h-[320px] w-full md:h-[400px]"
           />
         </div>
+        <address className="max-w-2xl text-sm not-italic leading-relaxed text-muted-foreground">
+          Beside Raveendrabharathi School, Fathe Khan Peta, Ramesh Reddy Nagar,
+          Nellore, Andhra Pradesh 524003
+        </address>
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="relative flex h-2 w-2 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+          </span>
+          Open · Closes 8 pm
+        </p>
       </div>
     </section>
   );
@@ -441,6 +452,17 @@ function Footer() {
             >
               +91 95001 38281
             </a>
+            <address className="max-w-xs text-sm not-italic leading-relaxed text-muted-foreground">
+              Beside Raveendrabharathi School, Fathe Khan Peta, Ramesh Reddy
+              Nagar, Nellore, Andhra Pradesh 524003
+            </address>
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              Open · Closes 8 pm
+            </p>
             <p className="max-w-xs text-sm text-muted-foreground">
               Share your event date and venue — we will walk you through dates,
               coverage and packages.
