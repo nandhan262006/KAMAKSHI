@@ -3,7 +3,7 @@
  * metadata, robots, sitemap, JSON-LD schema and llms.txt.
  */
 export const site = {
-  url: "https://kamakshicinemaphotography.com",
+  url: "https://www.kamakshicinemaphotography.com",
   name: "Kamakshi Cinema Photography",
   shortName: "Kamakshi",
   tagline:
