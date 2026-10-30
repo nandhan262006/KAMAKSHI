@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FilmCard } from "@/components/film-card";
 import { LiteYouTube } from "@/components/lite-youtube";
-import { getFilms } from "@/lib/content";
 import { WHATSAPP } from "@/lib/contact";
-import { absoluteMediaUrl, site } from "@/lib/site";
-import { youtubeVideoId } from "@/lib/youtube";
+import { site } from "@/lib/site";
 
 /** The client's own YouTube teasers, shown exactly like the home "Watch" block. */
 const BEFORE_YOU_BOOK = [
@@ -37,9 +34,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function FilmsPage() {
-  const films = await getFilms();
-
+export default function FilmsPage() {
   const videoSchema = {
     "@context": "https://schema.org",
     "@type": "VideoGallery",
@@ -47,38 +42,17 @@ export default async function FilmsPage() {
     name: "Wedding Films by Kamakshi Cinema Photography",
     url: `${site.url}/films`,
     description:
-      "Recent wedding films and cinematography — shot, edited and graded in-house with RAW capture and true 4K delivery.",
+      "Wedding teasers and films by Kamakshi Cinema Photography — shot, edited and graded in-house with RAW capture and true 4K delivery.",
     publisher: { "@id": `${site.url}/#organization` },
-    associatedMedia: films.map((film) => {
-      const ytId = youtubeVideoId(film.youtube);
-      if (ytId) {
-        return {
-          "@type": "VideoObject",
-          name: film.title.trim() || "Wedding film by Kamakshi Cinema Photography",
-          description:
-            film.description.trim() ||
-            "Wedding cinematography by Kamakshi Cinema Photography — shot and graded in-house.",
-          embedUrl: `${site.url}/films`,
-          url: `https://www.youtube.com/watch?v=${ytId}`,
-          thumbnailUrl: `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
-          uploadDate: new Date(film.createdAt).toISOString(),
-        };
-      }
-      return {
-        "@type": "VideoObject",
-        name: film.title.trim() || "Wedding film by Kamakshi Cinema Photography",
-        description:
-          film.description.trim() ||
-          "Wedding cinematography by Kamakshi Cinema Photography — shot and graded in-house.",
-        contentUrl: absoluteMediaUrl(film.src),
-        ...(film.poster
-          ? {
-              thumbnailUrl: absoluteMediaUrl(film.poster),
-            }
-          : null),
-        uploadDate: new Date(film.createdAt).toISOString(),
-      };
-    }),
+    associatedMedia: BEFORE_YOU_BOOK.map((v) => ({
+      "@type": "VideoObject",
+      name: v.title,
+      description:
+        "Wedding teaser by Kamakshi Cinema Photography — shot, edited and graded in-house in Nellore.",
+      url: `https://www.youtube.com/watch?v=${v.id}`,
+      thumbnailUrl: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
+      embedUrl: `${site.url}/films`,
+    })),
   };
 
   return (
@@ -132,44 +106,7 @@ export default async function FilmsPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-24 md:pb-32">
-        <h2 className="font-display text-4xl leading-tight text-foreground sm:text-5xl">
-          Recent wedding films.
-        </h2>
-        {films.length === 0 ? (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            Films are being prepared — check back soon.
-          </p>
-        ) : (
-          <div className="grid gap-10 md:grid-cols-2 md:gap-6">
-            {films.map((film) => {
-              const ytId = youtubeVideoId(film.youtube);
-              return (
-                <div key={film.id} className="flex flex-col gap-3">
-                  {ytId ? (
-                    <LiteYouTube
-                      id={ytId}
-                      title={film.title.trim() || "Wedding film by Kamakshi Cinema Photography"}
-                    />
-                  ) : (
-                    <FilmCard src={film.src} poster={film.poster} />
-                  )}
-                  {film.title.trim() ? (
-                    <h2 className="text-sm font-medium text-foreground">
-                      {film.title}
-                    </h2>
-                  ) : null}
-                  {film.description.trim() ? (
-                    <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-                      {film.description}
-                    </p>
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-12 flex flex-col items-center gap-5 rounded-3xl bg-gradient-to-b from-primary/10 via-primary/5 to-transparent px-6 py-14 text-center ring-1 ring-primary/20">
+        <div className="flex flex-col items-center gap-5 rounded-3xl bg-gradient-to-b from-primary/10 via-primary/5 to-transparent px-6 py-14 text-center ring-1 ring-primary/20">
           <h2 className="font-display text-3xl text-foreground sm:text-4xl">
             Your story deserves this.
           </h2>
