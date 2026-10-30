@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomBytes } from "node:crypto";
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -75,6 +76,26 @@ export async function putObject(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
   );
   return publicUrlFor(key);
+}
+
+/**
+ * Presigned direct-to-R2 upload for video. The browser PUTs the file itself,
+ * which bypasses the ~4.5MB serverless request-body limit that breaks 100MB+ uploads.
+ */
+export async function presignVideoUpload(
+  filename: string,
+): Promise<{ uploadUrl: string; src: string; contentType: string }> {
+  const bucket = process.env.R2_BUCKET;
+  if (!bucket) throw new Error("R2_BUCKET is not set");
+  const contentType = contentTypeFor(filename, "video");
+  if (!contentType) throw new Error("Unsupported video file");
+  const key = newKey("videos", filename);
+  const uploadUrl = await getSignedUrl(
+    s3,
+    new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
+    { expiresIn: 3600 },
+  );
+  return { uploadUrl, src: publicUrlFor(key), contentType };
 }
 
 /** Deletes the R2 object behind a stored URL; ignores local paths like /downloads/… */

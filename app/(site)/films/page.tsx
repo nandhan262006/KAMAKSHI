@@ -3,7 +3,7 @@ import Link from "next/link";
 import { FilmCard } from "@/components/film-card";
 import { getFilms } from "@/lib/content";
 import { WHATSAPP } from "@/lib/contact";
-import { ABSOLUTE_LOGO_SQUARE_URL, absoluteMediaUrl, site } from "@/lib/site";
+import { absoluteMediaUrl, site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Wedding Films",
@@ -16,14 +16,12 @@ export const metadata: Metadata = {
     title: "Wedding Films — Kamakshi Cinema Photography",
     description:
       "Recent wedding films and cinematography — every film shot, edited and graded in-house. RAW capture, 10-bit colour, true 4K delivery.",
-    images: [ABSOLUTE_LOGO_SQUARE_URL],
   },
   twitter: {
     card: "summary_large_image",
     title: "Wedding Films — Kamakshi Cinema Photography",
     description:
       "Recent wedding films and cinematography — every film shot, edited and graded in-house.",
-    images: [ABSOLUTE_LOGO_SQUARE_URL],
   },
 };
 

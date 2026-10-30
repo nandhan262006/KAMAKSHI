@@ -48,6 +48,60 @@ function uploadFile(
   });
 }
 
+/**
+ * Video upload goes straight to R2 with a presigned URL (server request bodies
+ * cap at ~4.5MB on Vercel), then a finalize pass transcodes to 1080p MP4.
+ */
+async function uploadVideo(
+  file: File,
+  onProgress: (value: number) => void,
+): Promise<string> {
+  const presignRes = await fetch("/api/admin/presign", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ filename: file.name }),
+  });
+  if (!presignRes.ok) {
+    let message = `Could not start upload (${presignRes.status})`;
+    try {
+      message = (await presignRes.json()).error ?? message;
+    } catch {}
+    throw new Error(message);
+  }
+  const { uploadUrl, src, contentType } = await presignRes.json();
+
+  await new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", uploadUrl);
+    xhr.setRequestHeader("Content-Type", contentType);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded / e.total);
+    };
+    xhr.onload = () =>
+      xhr.status >= 200 && xhr.status < 300
+        ? resolve()
+        : reject(new Error(`Upload failed (${xhr.status})`));
+    xhr.onerror = () => reject(new Error("Network error during upload"));
+    xhr.send(file);
+  });
+
+  let finalSrc = src as string;
+  try {
+    const finalizeRes = await fetch("/api/admin/finalize", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ src }),
+    });
+    if (finalizeRes.ok) {
+      const data = await finalizeRes.json();
+      if (typeof data.src === "string") finalSrc = data.src;
+    }
+  } catch {
+    // Upload itself already succeeded; keep the stored original.
+  }
+  return finalSrc;
+}
+
 type UploadState = {
   label: string;
   value: number; // 0..1
@@ -113,7 +167,7 @@ export function FilmCreateForm() {
     setError(null);
     setDone(false);
     try {
-      const src = await uploadFile(video, "video", (v) =>
+      const src = await uploadVideo(video, (v) =>
         setProgress("video", video, v),
       );
       let posterUrl: string | null = null;
@@ -240,7 +294,7 @@ export function FilmVideoReplaceForm({ filmId }: { filmId: number }) {
     setPending(true);
     setError(null);
     try {
-      const src = await uploadFile(file, "video", (v) =>
+      const src = await uploadVideo(file, (v) =>
         setUpload({ label: `Uploading — ${file.name}`, value: v }),
       );
       setUpload({ label: "Replacing film…", value: 1 });

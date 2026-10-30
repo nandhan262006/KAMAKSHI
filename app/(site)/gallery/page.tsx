@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getGallery } from "@/lib/content";
 import { WHATSAPP } from "@/lib/contact";
-import { ABSOLUTE_LOGO_SQUARE_URL, absoluteMediaUrl, site } from "@/lib/site";
+import { absoluteMediaUrl, site } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Gallery",
@@ -16,14 +16,12 @@ export const metadata: Metadata = {
     title: "Gallery — Kamakshi Cinema Photography",
     description:
       "Wedding and pre-wedding frames from recent events — candid, traditional and drone coverage.",
-    images: [ABSOLUTE_LOGO_SQUARE_URL],
   },
   twitter: {
     card: "summary_large_image",
     title: "Gallery — Kamakshi Cinema Photography",
     description:
       "Wedding and pre-wedding frames from recent events — candid, traditional and drone coverage.",
-    images: [ABSOLUTE_LOGO_SQUARE_URL],
   },
 };
 
