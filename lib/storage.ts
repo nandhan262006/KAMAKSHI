@@ -46,6 +46,9 @@ const s3 = new S3Client({
     accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
   },
+  // Required for presigned browser uploads: SDK v3's default CRC32 checksum
+  // middleware signs a value the browser cannot send, causing SignatureDoesNotMatch.
+  requestChecksumCalculation: "WHEN_REQUIRED",
 });
 
 export function remoteFromSrc(src: string): boolean {
