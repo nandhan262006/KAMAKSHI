@@ -71,8 +71,9 @@ export default function Home() {
                 మీ Wedding Memories జీవితాంతం మీతో ఉంటాయి.
               </span>
               <span className="mt-2 block text-base leading-relaxed">
-                We capture every moment at its absolute best — quality,
-                experience, editing, data safety — and{" "}
+                Nellore's own wedding photography studio — every moment
+                captured at its absolute best with quality, experience,
+                editing, data safety, and{" "}
                 <strong className="font-semibold text-foreground">
                   Instant Delivery
                 </strong>{" "}

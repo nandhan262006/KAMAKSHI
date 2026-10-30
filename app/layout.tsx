@@ -33,7 +33,7 @@ const notoTelugu = Noto_Serif_Telugu({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} — Wedding Photography & Cinematography`,
+    default: `${site.name} — Best Photography Studio in Nellore`,
     template: `%s — ${site.name}`,
   },
   description: site.tagline,
@@ -42,9 +42,12 @@ export const metadata: Metadata = {
   creator: site.name,
   publisher: site.name,
   keywords: [
-    "wedding photography",
-    "wedding cinematography",
-    "candid photography",
+    "best photography studio in Nellore",
+    "photography studio in Nellore",
+    "wedding photographer Nellore",
+    "wedding photography Nellore",
+    "candid photographer Nellore",
+    "wedding cinematography Nellore",
     "drone coverage",
     "live streaming wedding",
     "pre-wedding photography",
@@ -58,22 +61,13 @@ export const metadata: Metadata = {
     locale: "en_IN",
     alternateLocale: ["te_IN"],
     url: site.url,
-    title: `${site.name} — Wedding Photography & Cinematography`,
+    title: `${site.name} — Best Photography Studio in Nellore`,
     description: site.tagline,
-    images: [
-      {
-        url: ABSOLUTE_LOGO_SQUARE_URL,
-        width: 1299,
-        height: 1211,
-        alt: `${site.name} logo`,
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${site.name} — Wedding Photography & Cinematography`,
+    title: `${site.name} — Best Photography Studio in Nellore`,
     description: site.tagline,
-    images: [ABSOLUTE_LOGO_SQUARE_URL],
   },
   icons: { icon: "/justlogo.png" },
   robots: {
@@ -109,15 +103,16 @@ function SiteGraph() {
               "@id": `${site.url}/#organization`,
               name: site.name,
               url: site.url,
-              logo: {
-                "@type": "ImageObject",
-                url: ABSOLUTE_LOGO_SQUARE_URL,
-                width: 1299,
-                height: 1211,
-              },
+              logo: ABSOLUTE_LOGO_SQUARE_URL,
               image: ABSOLUTE_LOGO_SQUARE_URL,
               description: site.tagline,
               telephone: site.phone,
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: "Nellore",
+                addressRegion: "Andhra Pradesh",
+                addressCountry: "IN",
+              },
               geo: {
                 "@type": "GeoCoordinates",
                 latitude: site.geo.lat,
