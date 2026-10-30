@@ -83,7 +83,7 @@ export default function Home() {
           }
           ctaSecondary={
             <a
-              href="#contact"
+              href="/gallery"
               className="rounded-full border border-border bg-background/70 px-8 py-3.5 font-medium text-foreground backdrop-blur transition-colors hover:border-foreground/50"
             >
               Explore our work
