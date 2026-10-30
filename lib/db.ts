@@ -141,18 +141,25 @@ async function ensureSchema() {
 
   for (const migration of MIGRATIONS) {
     const claimed = await claimMarker(db, migration.version);
+    const appliedColumns: string[] = [];
     for (const { table, column, ddl } of migration.columns) {
       const cols = await db.execute(`PRAGMA table_info(${table})`);
       if (cols.rows.some((row) => String(row.name) === column)) continue;
       if (claimed) {
         await db.execute(ddl);
+        appliedColumns.push(column);
       } else {
         await waitForColumn(db, table, column);
         break;
       }
     }
-    for (const sql of migration.after) {
-      await db.execute(sql);
+    // Legacy-row backfills must run only the moment the migration lands —
+    // re-running them on every cold start would silently reset every CMS
+    // home toggle the admin panel has since changed.
+    if (appliedColumns.length > 0) {
+      for (const sql of migration.after) {
+        await db.execute(sql);
+      }
     }
     await db.execute({
       sql: "UPDATE cms_meta SET value = ? WHERE key = ?",
