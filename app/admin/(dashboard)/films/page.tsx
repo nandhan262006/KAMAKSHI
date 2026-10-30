@@ -1,14 +1,17 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
-import { listFilms } from "@/lib/db";
+import { listFilms, filmKind } from "@/lib/db";
 import {
   moveFilm,
   deleteFilm,
+  addYoutubeFilm,
 } from "@/app/admin/actions";
-import { FilmCreateForm } from "@/components/admin/upload";
 import { HomeToggle } from "@/components/admin/home-toggle";
-import { remoteFromSrc } from "@/lib/storage";
+import {
+  remoteFromSrc,
+} from "@/lib/storage";
+import { youtubeVideoId } from "@/lib/youtube";
 
 export const metadata = { title: "Films — Studio CMS" };
 
@@ -34,7 +37,11 @@ async function FilmsContent() {
             Wedding films.
           </h1>
           <span className="rounded-full border border-stone-300 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.15em] text-stone-600">
-            {films.length} film{films.length === 1 ? "" : "s"}
+            {films.filter((f) => filmKind(f) === "video").length} video film
+            {films.filter((f) => filmKind(f) === "video").length === 1 ? "" : "s"}
+            {" · "}
+            {films.filter((f) => filmKind(f) === "youtube").length} preview
+            {films.filter((f) => filmKind(f) === "youtube").length === 1 ? "" : "s"}
           </span>
         </div>
       </header>
@@ -42,23 +49,61 @@ async function FilmsContent() {
       <details className="group rounded-3xl border border-stone-200/80 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
         <summary className="flex cursor-pointer list-none items-center justify-between px-6 py-5 sm:px-8">
           <span className="font-display text-2xl font-semibold">
-            Add a new film
+            Add a YouTube preview
           </span>
           <span className="rounded-full bg-stone-900 px-5 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-white transition-transform group-open:hidden">
-            Upload
+            Add
           </span>
           <span className="hidden rounded-full border border-stone-300 px-5 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-stone-600 group-open:inline-flex">
             Close
           </span>
         </summary>
-        <FilmCreateForm />
+        <form
+          action={addYoutubeFilm}
+          className="flex flex-col gap-4 px-6 pb-8 sm:px-8"
+        >
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+              YouTube link
+            </span>
+            <input
+              type="text"
+              name="youtube"
+              required
+              placeholder="https://www.youtube.com/watch?v=…"
+              className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+              Title
+            </span>
+            <input
+              type="text"
+              name="title"
+              placeholder="Wedding teaser — couple names"
+              className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="submit"
+              className="rounded-xl bg-stone-900 px-6 py-3 text-sm font-semibold uppercase tracking-[0.15em] text-white transition-colors hover:bg-black"
+            >
+              Add preview
+            </button>
+            <span className="text-xs text-stone-400">
+              Watch / youtu.be / shorts links all work. The preview shows on the
+              public films page instantly.
+            </span>
+          </div>
+        </form>
       </details>
 
       <p className="text-xs text-stone-500">
-        Home page shows the first <strong>4</strong> films marked ON HOME — replace
-        them with the toggle and Replace video. Films with a
-        <strong> YouTube link</strong> show as YouTube previews on the public
-        films page instead of the raw upload.
+        The <strong>4 video films</strong> are the home-page reels — replaceable
+        only, never extended. <strong>YouTube previews</strong> are the main
+        feature of the public films page — add as many as you like.
       </p>
 
       <FilmList films={films} />
@@ -72,7 +117,7 @@ function FilmList({ films }: { films: Film[] }) {
   if (films.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-stone-300 bg-white/60 px-6 py-16 text-center text-sm text-stone-500">
-        No films yet. Upload your first one above.
+        No films yet. Add a YouTube preview above.
       </div>
     );
   }
@@ -86,22 +131,22 @@ function FilmList({ films }: { films: Film[] }) {
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-500">
             {index + 1}
           </span>
-          <video
-            src={film.src}
-            poster={film.poster ?? undefined}
-            preload="metadata"
-            muted
-            className="hidden w-44 aspect-video rounded-xl border border-stone-200 bg-stone-100 object-cover sm:block"
-          />
+          <MediaTypeCard film={film} />
           <div className="flex flex-col gap-1 sm:min-w-0 sm:col-start-3">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-medium">
                 {film.title.trim() || "Untitled film"}
               </p>
               <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-stone-500">
-                {remoteFromSrc(film.src) ? "Cloud" : "Local"}
+                {filmKind(film) === "youtube"
+                  ? "YouTube preview"
+                  : remoteFromSrc(film.src)
+                    ? "Cloud"
+                    : "Local"}
               </span>
-              <HomeToggle kind="film" id={film.id} on={film.home} />
+              {filmKind(film) === "video" ? (
+                <HomeToggle kind="film" id={film.id} on={film.home} />
+              ) : null}
             </div>
             {film.description ? (
               <p className="line-clamp-2 text-sm text-stone-500">
@@ -119,6 +164,39 @@ function FilmList({ films }: { films: Film[] }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+function MediaTypeCard({ film }: { film: Film }) {
+  if (filmKind(film) === "youtube") {
+    const ytId = youtubeVideoId(film.youtube);
+    if (!ytId) return <div className="hidden sm:block" />;
+    return (
+      <a
+        href={`https://www.youtube.com/watch?v=${ytId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hidden w-44 shrink-0 overflow-hidden rounded-xl border border-stone-200 bg-stone-100 sm:block"
+        aria-label="Watch on YouTube"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`}
+          alt=""
+          loading="lazy"
+          className="aspect-video w-full object-cover"
+        />
+      </a>
+    );
+  }
+  return (
+    <video
+      src={film.src}
+      poster={film.poster ?? undefined}
+      preload="metadata"
+      muted
+      className="hidden w-44 aspect-video rounded-xl border border-stone-200 bg-stone-100 object-cover sm:block"
+    />
   );
 }
 

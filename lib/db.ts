@@ -14,6 +14,15 @@ export type Film = {
   createdAt: number;
 };
 
+/**
+ * Two kinds of films share the table:
+ * - video rows: the replaceable home-page films (src = mp4 URL or /downloads path)
+ * - youtube rows: the /films page previews (src empty, youtube link mandatory)
+ */
+export function filmKind(film: Pick<Film, "src" | "youtube">): "video" | "youtube" {
+  return film.youtube ? "youtube" : "video";
+}
+
 export type GalleryItem = {
   id: number;
   position: number;

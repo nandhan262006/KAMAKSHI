@@ -1,40 +1,36 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LiteYouTube } from "@/components/lite-youtube";
+import { getFilms } from "@/lib/content";
 import { WHATSAPP } from "@/lib/contact";
 import { site } from "@/lib/site";
-
-/** The client's own YouTube teasers, shown exactly like the home "Watch" block. */
-const BEFORE_YOU_BOOK = [
-  { id: "XqcKejNr598", num: "01", title: "Gowthami Bride Haldi Teaser | Nellore Telugu Wedding" },
-  { id: "ipHzZUpOyXI", num: "02", title: "Muni Megha Sri & Manoj Wedding & Reception Teaser | Nellore Cinematic Wedding" },
-  { id: "IzJdDni6_EU", num: "03", title: "Lasya Seemantham Teaser | Telugu Baby Shower Film | Nellore" },
-  { id: "2Xv7W6JR7Ng", num: "04", title: "Loukya Half Saree Pre-Shoot Song | Outdoor Half Saree Film | Nellore" },
-  { id: "7pwKZgK5wSc", num: "05", title: "Kumar Siva Groom Haldi Teaser | Nellore Telugu Wedding" },
-  { id: "x8D2MPGNYn0", num: "06", title: "Gowthami & Guru Prakash Reception Teaser | Nellore Cinematic Wedding" },
-];
+import { filmKind, type Film } from "@/lib/db";
+import { youtubeVideoId } from "@/lib/youtube";
 
 export const metadata: Metadata = {
   title: "Wedding Films",
   description:
-    "Recent wedding films by Kamakshi Cinema Photography — wedding films and cinematography, shot and graded in-house. Like what you see? Book your date.",
+    "Wedding teasers and films by Kamakshi Cinema Photography — cinematic previews from recent Nellore weddings. Like what you see? Book your date.",
   alternates: { canonical: "/films" },
   openGraph: {
     type: "website",
     url: `${site.url}/films`,
     title: "Wedding Films — Kamakshi Cinema Photography",
     description:
-      "Recent wedding films and cinematography — every film shot, edited and graded in-house. RAW capture, 10-bit colour, true 4K delivery.",
+      "Cinematic wedding teasers from Nellore — shot, edited and graded in-house. RAW capture, 10-bit colour, true 4K delivery.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Wedding Films — Kamakshi Cinema Photography",
     description:
-      "Recent wedding films and cinematography — every film shot, edited and graded in-house.",
+      "Cinematic wedding teasers from Nellore — shot, edited and graded in-house.",
   },
 };
 
-export default function FilmsPage() {
+export default async function FilmsPage() {
+  const films = await getFilms();
+  const previews = films.filter((film) => filmKind(film) === "youtube");
+
   const videoSchema = {
     "@context": "https://schema.org",
     "@type": "VideoGallery",
@@ -44,15 +40,19 @@ export default function FilmsPage() {
     description:
       "Wedding teasers and films by Kamakshi Cinema Photography — shot, edited and graded in-house with RAW capture and true 4K delivery.",
     publisher: { "@id": `${site.url}/#organization` },
-    associatedMedia: BEFORE_YOU_BOOK.map((v) => ({
-      "@type": "VideoObject",
-      name: v.title,
-      description:
-        "Wedding teaser by Kamakshi Cinema Photography — shot, edited and graded in-house in Nellore.",
-      url: `https://www.youtube.com/watch?v=${v.id}`,
-      thumbnailUrl: `https://i.ytimg.com/vi/${v.id}/hqdefault.jpg`,
-      embedUrl: `${site.url}/films`,
-    })),
+    associatedMedia: previews.map((film: Film) => {
+      const ytId = youtubeVideoId(film.youtube);
+      return {
+        "@type": "VideoObject",
+        name: film.title.trim() || "Wedding teaser by Kamakshi Cinema Photography",
+        description:
+          film.description.trim() ||
+          "Wedding teaser by Kamakshi Cinema Photography — shot, edited and graded in-house in Nellore.",
+        url: film.youtube ?? undefined,
+        thumbnailUrl: ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : undefined,
+        embedUrl: `${site.url}/films`,
+      };
+    }),
   };
 
   return (
@@ -89,19 +89,39 @@ export default function FilmsPage() {
               ఆధారంగా ఎంచుకోవడం ముఖ్యం.
             </p>
           </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
-            {BEFORE_YOU_BOOK.map((v) => (
-              <article key={v.id} className="flex flex-col gap-4">
-                <LiteYouTube id={v.id} title={v.title} />
-                <div className="flex flex-col gap-1">
-                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-                    {v.num}
-                  </p>
-                  <h3 className="font-medium text-foreground">{v.title}</h3>
-                </div>
-              </article>
-            ))}
-          </div>
+          {previews.length === 0 ? (
+            <p className="mt-12 py-8 text-center text-sm text-muted-foreground">
+              Previews are being prepared — check back soon.
+            </p>
+          ) : (
+            <div className="mt-12 grid gap-6 md:grid-cols-2">
+              {previews.map((film, index) => {
+                const ytId = youtubeVideoId(film.youtube);
+                if (!ytId) return null;
+                return (
+                  <article key={film.id} className="flex flex-col gap-4">
+                    <LiteYouTube
+                      id={ytId}
+                      title={film.title.trim() || "Wedding teaser"}
+                    />
+                    <div className="flex flex-col gap-1">
+                      <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                        {String(index + 1).padStart(2, "0")}
+                      </p>
+                      {film.title.trim() ? (
+                        <h3 className="font-medium text-foreground">{film.title}</h3>
+                      ) : null}
+                      {film.description.trim() ? (
+                        <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+                          {film.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

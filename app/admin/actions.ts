@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidateTag } from "next/cache";
-import { getDb, getFilm, withRetry } from "@/lib/db";
+import { getDb, getFilm, filmKind, withRetry } from "@/lib/db";
 import { hasSession } from "@/lib/auth";
 import { deleteObjectFor } from "@/lib/storage";
 import { normalizeYouTubeUrl } from "@/lib/youtube";
@@ -79,6 +79,7 @@ export async function createFilm(input: FilmInput) {
 
 export async function updateFilmDetails(formData: FormData) {
   await assertAdmin();
+  const id = num(formData, "id");
   const title = str(formData, "title");
   const description = str(formData, "description");
   let youtube: string | null;
@@ -90,16 +91,24 @@ export async function updateFilmDetails(formData: FormData) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Invalid YouTube link";
-    redirect(`/admin/films/${num(formData, "id")}?error=${encodeURIComponent(message)}`);
+    redirect(`/admin/films/${id}?error=${encodeURIComponent(message)}`);
+  }
+  const current = await getFilm(id);
+  if (current && filmKind(current) === "youtube" && !youtube) {
+    redirect(
+      `/admin/films/${id}?error=${encodeURIComponent(
+        "This is a YouTube preview — the link can't be empty. Add a YouTube link or delete the preview.",
+      )}`,
+    );
   }
   await withRetry(async (db) => {
     await db.execute({
       sql: "UPDATE films SET title = ?, description = ?, youtube = ? WHERE id = ?",
-      args: [title, description, youtube, num(formData, "id")],
+      args: [title, description, youtube, id],
     });
   });
   revalidate();
-  redirect(`/admin/films/${num(formData, "id")}?saved=1`);
+  redirect(`/admin/films/${id}?saved=1`);
 }
 
 export async function replaceFilmVideo(id: number, src: string) {
@@ -156,11 +165,39 @@ export async function deleteFilm(formData: FormData) {
 
 export async function toggleFilmHome(formData: FormData) {
   await assertAdmin();
+  const id = num(formData, "id");
+  const current = await getFilm(id);
+  if (!current || filmKind(current) === "youtube") return;
   const on = str(formData, "value") === "1" ? 1 : 0;
   await withRetry(async (db) => {
     await db.execute({
       sql: "UPDATE films SET home = ? WHERE id = ?",
-      args: [on, num(formData, "id")],
+      args: [on, id],
+    });
+  });
+  revalidate();
+}
+
+/**
+ * Adds a /films YouTube preview — no file upload involved. The link is the
+ * film; position appends at the bottom (reorder with the arrows).
+ */
+export async function addYoutubeFilm(formData: FormData) {
+  await assertAdmin();
+  const youtube = youtubeOrNull(str(formData, "youtube"));
+  if (!youtube) {
+    throw new Error("A YouTube link is required for a YouTube preview.");
+  }
+  const title = str(formData, "title");
+  const description = str(formData, "description");
+  await withRetry(async (db) => {
+    const last = await db.execute(
+      "SELECT COALESCE(MAX(position), 0) AS p FROM films",
+    );
+    const position = Number(last.rows[0].p) + 1;
+    await db.execute({
+      sql: "INSERT INTO films (position, src, poster, title, description, youtube, home, created_at) VALUES (?, '', NULL, ?, ?, ?, 0, ?)",
+      args: [position, title, description, youtube, Date.now()],
     });
   });
   revalidate();

@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
-import { getFilm } from "@/lib/db";
+import { getFilm, filmKind } from "@/lib/db";
 import {
   updateFilmDetails,
   removeFilmPoster,
@@ -12,6 +12,7 @@ import {
   FilmPosterReplaceForm,
   FilmVideoReplaceForm,
 } from "@/components/admin/upload";
+import { youtubeVideoId } from "@/lib/youtube";
 
 export const metadata = { title: "Edit film — Studio CMS" };
 
@@ -47,30 +48,40 @@ async function FilmEditorFilm({
           <h1 className="font-display text-4xl font-semibold sm:text-5xl">
             {film.title.trim() || "Edit film"}
           </h1>
-          <Link
-            href="/admin/films"
-            className="rounded-full border border-stone-300 px-5 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-stone-600 transition-colors hover:border-stone-900 hover:text-stone-900"
-          >
-            ← All films
-          </Link>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full border border-stone-300 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-stone-600">
+              {filmKind(film) === "youtube" ? "YouTube preview" : "Video film"}
+            </span>
+            <Link
+              href="/admin/films"
+              className="rounded-full border border-stone-300 px-5 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-stone-600 transition-colors hover:border-stone-900 hover:text-stone-900"
+            >
+              ← All films
+            </Link>
+          </div>
         </div>
       </header>
 
-      <section className="overflow-hidden rounded-3xl border border-stone-200/80 bg-black">
-        <video
-          src={film.src}
-          poster={film.poster ?? undefined}
-          controls
-          preload="metadata"
-          className="aspect-video w-full"
-        />
-      </section>
+      {filmKind(film) === "video" ? (
+        <section className="overflow-hidden rounded-3xl border border-stone-200/80 bg-black">
+          <video
+            src={film.src}
+            poster={film.poster ?? undefined}
+            controls
+            preload="metadata"
+            className="aspect-video w-full"
+          />
+        </section>
+      ) : null}
 
       <DetailsForm film={film} />
 
-      <PosterCard film={film} />
-
-      <VideoReplaceCard film={film} />
+      {filmKind(film) === "video" ? (
+        <>
+          <PosterCard film={film} />
+          <VideoReplaceCard film={film} />
+        </>
+      ) : null}
     </div>
   );
 }
@@ -107,23 +118,29 @@ function DetailsForm({
             className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
           />
         </label>
-        <label className="flex flex-col gap-1.5 text-sm">
-          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
-            YouTube link (optional)
-          </span>
-          <input
-            type="text"
-            name="youtube"
-            defaultValue={film.youtube ?? ""}
-            placeholder="https://www.youtube.com/watch?v=…"
-            className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
-          />
-          <span className="text-xs text-stone-400">
-            Pastes a YouTube video → the public films page shows a YouTube
-            preview for this film instead of the raw upload. Leave empty to
-            keep the raw preview.
-          </span>
-        </label>
+        {filmKind(film) === "youtube" ? (
+          <label className="flex flex-col gap-1.5 text-sm">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+              YouTube link
+            </span>
+            <input
+              type="text"
+              name="youtube"
+              defaultValue={film.youtube ?? ""}
+              placeholder="https://www.youtube.com/watch?v=…"
+              className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
+            />
+            <span className="text-xs text-stone-400">
+              This preview shows on the public films page. Watch / youtu.be /
+              shorts links all work — paste a new link to swap the preview.
+            </span>
+          </label>
+        ) : (
+          <p className="text-xs text-stone-400">
+            Home-page video — replace the video file below. YouTube links only
+            belong to YouTube previews.
+          </p>
+        )}
         <div className="pt-1">
           <button
             type="submit"
