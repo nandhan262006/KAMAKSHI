@@ -1,4 +1,5 @@
 import { AnimatedMarqueeHero } from "@/components/ui/animated-marquee-hero";
+import { GoogleReviews } from "@/components/google-reviews";
 import {
   WhyChoose,
   Watch,
@@ -103,6 +104,7 @@ export default function Home() {
         <Promise />
         <Explore />
       </main>
+      <GoogleReviews />
       <Footer />
     </>
   );

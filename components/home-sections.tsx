@@ -47,7 +47,7 @@ const WHY = [
   {
     icon: IconPen,
     title: "In-House Editing Team",
-    copy: "We own our editing team and high-end editing systems. Nothing is outsourced — full control over quality, and faster delivery.",
+    copy: "The only studio in Nellore with an in-house editing team — 10 cinematographers and 10 editors working directly for us. Nothing is outsourced, so you get complete quality control and faster delivery.",
   },
   {
     icon: IconShield,
