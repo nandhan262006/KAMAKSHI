@@ -310,22 +310,20 @@ function Explore() {
           Explore our work
         </p>
         <ul className="mt-3 flex flex-col">
-          {LINKS.map(({ label, handle, href }) => (
-            <li key={href} className="border-t border-border last:border-b">
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex items-center justify-between gap-4 py-5"
-              >
-                <span className="flex flex-col gap-0.5">
-                  <span className="font-medium text-foreground">{label}</span>
-                  <span className="text-sm text-muted-foreground">{handle}</span>
+          <li className="border-t border-border last:border-b">
+            <Link
+              href="/gallery"
+              className="group flex items-center justify-between gap-4 py-5"
+            >
+              <span className="flex flex-col gap-0.5">
+                <span className="font-medium text-foreground">Gallery</span>
+                <span className="text-sm text-muted-foreground">
+                  Every frame — photos and stills from our recent weddings.
                 </span>
-                <IconArrow className="h-5 w-5 shrink-0 text-muted-foreground transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
-              </a>
-            </li>
-          ))}
+              </span>
+              <IconArrow className="h-5 w-5 shrink-0 text-muted-foreground transition-all duration-300 group-hover:translate-x-1 group-hover:text-primary" />
+            </Link>
+          </li>
         </ul>
       </div>
       <div className="flex flex-col gap-3 lg:col-span-2">
