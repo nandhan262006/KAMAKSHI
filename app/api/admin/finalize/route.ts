@@ -13,7 +13,7 @@ import { createWriteStream } from "node:fs";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 
-export const maxDuration = 780;
+export const maxDuration = 300;
 
 /** Protects the serverless /tmp disk — very long films keep their uploaded original. */
 const MAX_FINALIZE_BYTES = 512 * 1024 * 1024;
