@@ -5,6 +5,7 @@ import { revalidateTag } from "next/cache";
 import { getDb, getFilm, withRetry } from "@/lib/db";
 import { hasSession } from "@/lib/auth";
 import { deleteObjectFor } from "@/lib/storage";
+import { normalizeYouTubeUrl } from "@/lib/youtube";
 
 async function assertAdmin() {
   if (!(await hasSession())) {
@@ -43,7 +44,19 @@ export type FilmInput = {
   poster?: string | null;
   title: string;
   description: string;
+  youtube?: string | null;
 };
+
+/** Empty string clears; a value must parse as a YouTube link. Returns null or a normalized URL. */
+function youtubeOrNull(input: string | null | undefined): string | null {
+  const value = String(input ?? "").trim();
+  if (!value) return null;
+  const normalized = normalizeYouTubeUrl(value);
+  if (!normalized) {
+    throw new Error("That doesn't look like a YouTube link. Use a youtu.be/watch/shorts URL or a video ID.");
+  }
+  return normalized;
+}
 
 export async function createFilm(input: FilmInput) {
   await assertAdmin();
@@ -51,14 +64,15 @@ export async function createFilm(input: FilmInput) {
   const poster = input.poster
     ? requireUploaded(input.poster, "images")
     : null;
+  const youtube = youtubeOrNull(input.youtube);
   const db = await getDb();
   const last = await db.execute(
     "SELECT COALESCE(MAX(position), 0) AS p FROM films",
   );
   const position = Number(last.rows[0].p) + 1;
   await db.execute({
-    sql: "INSERT INTO films (position, src, poster, title, description, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    args: [position, src, poster, input.title.trim(), input.description.trim(), Date.now()],
+    sql: "INSERT INTO films (position, src, poster, title, description, youtube, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    args: [position, src, poster, input.title.trim(), input.description.trim(), youtube, Date.now()],
   });
   revalidate();
 }
@@ -67,10 +81,21 @@ export async function updateFilmDetails(formData: FormData) {
   await assertAdmin();
   const title = str(formData, "title");
   const description = str(formData, "description");
+  let youtube: string | null;
+  try {
+    youtube = youtubeOrNull(
+      typeof formData.get("youtube") === "string"
+        ? String(formData.get("youtube"))
+        : null,
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Invalid YouTube link";
+    redirect(`/admin/films/${num(formData, "id")}?error=${encodeURIComponent(message)}`);
+  }
   await withRetry(async (db) => {
     await db.execute({
-      sql: "UPDATE films SET title = ?, description = ? WHERE id = ?",
-      args: [title, description, num(formData, "id")],
+      sql: "UPDATE films SET title = ?, description = ?, youtube = ? WHERE id = ?",
+      args: [title, description, youtube, num(formData, "id")],
     });
   });
   revalidate();

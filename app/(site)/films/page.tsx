@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FilmCard } from "@/components/film-card";
+import { LiteYouTube } from "@/components/lite-youtube";
 import { getFilms } from "@/lib/content";
 import { WHATSAPP } from "@/lib/contact";
 import { absoluteMediaUrl, site } from "@/lib/site";
+import { youtubeVideoId } from "@/lib/youtube";
+
+/** The client's own YouTube teasers, shown exactly like the home "Watch" block. */
+const BEFORE_YOU_BOOK = [
+  { id: "XqcKejNr598", num: "01", title: "Gowthami Bride Haldi Teaser | Nellore Telugu Wedding" },
+  { id: "ipHzZUpOyXI", num: "02", title: "Muni Megha Sri & Manoj Wedding & Reception Teaser | Nellore Cinematic Wedding" },
+  { id: "IzJdDni6_EU", num: "03", title: "Lasya Seemantham Teaser | Telugu Baby Shower Film | Nellore" },
+  { id: "2Xv7W6JR7Ng", num: "04", title: "Loukya Half Saree Pre-Shoot Song | Outdoor Half Saree Film | Nellore" },
+  { id: "7pwKZgK5wSc", num: "05", title: "Kumar Siva Groom Haldi Teaser | Nellore Telugu Wedding" },
+  { id: "x8D2MPGNYn0", num: "06", title: "Gowthami & Guru Prakash Reception Teaser | Nellore Cinematic Wedding" },
+];
 
 export const metadata: Metadata = {
   title: "Wedding Films",
@@ -37,20 +49,36 @@ export default async function FilmsPage() {
     description:
       "Recent wedding films and cinematography — shot, edited and graded in-house with RAW capture and true 4K delivery.",
     publisher: { "@id": `${site.url}/#organization` },
-    associatedMedia: films.map((film) => ({
-      "@type": "VideoObject",
-      name: film.title.trim() || "Wedding film by Kamakshi Cinema Photography",
-      description:
-        film.description.trim() ||
-        "Wedding cinematography by Kamakshi Cinema Photography — shot and graded in-house.",
-      contentUrl: absoluteMediaUrl(film.src),
-      ...(film.poster
-        ? {
-            thumbnailUrl: absoluteMediaUrl(film.poster),
-          }
-        : null),
-      uploadDate: new Date(film.createdAt).toISOString(),
-    })),
+    associatedMedia: films.map((film) => {
+      const ytId = youtubeVideoId(film.youtube);
+      if (ytId) {
+        return {
+          "@type": "VideoObject",
+          name: film.title.trim() || "Wedding film by Kamakshi Cinema Photography",
+          description:
+            film.description.trim() ||
+            "Wedding cinematography by Kamakshi Cinema Photography — shot and graded in-house.",
+          embedUrl: `${site.url}/films`,
+          url: `https://www.youtube.com/watch?v=${ytId}`,
+          thumbnailUrl: `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
+          uploadDate: new Date(film.createdAt).toISOString(),
+        };
+      }
+      return {
+        "@type": "VideoObject",
+        name: film.title.trim() || "Wedding film by Kamakshi Cinema Photography",
+        description:
+          film.description.trim() ||
+          "Wedding cinematography by Kamakshi Cinema Photography — shot and graded in-house.",
+        contentUrl: absoluteMediaUrl(film.src),
+        ...(film.poster
+          ? {
+              thumbnailUrl: absoluteMediaUrl(film.poster),
+            }
+          : null),
+        uploadDate: new Date(film.createdAt).toISOString(),
+      };
+    }),
   };
 
   return (
@@ -75,28 +103,69 @@ export default async function FilmsPage() {
         </Link>
       </section>
 
+      <section className="border-y border-border bg-muted/40">
+        <div className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+          <div className="flex max-w-2xl flex-col gap-4">
+            <h2 className="font-display text-4xl leading-tight text-foreground sm:text-5xl">
+              Before you book, watch these.
+            </h2>
+            <p className="text-pretty text-muted-foreground">
+              Photography ఎంచుకోవడం కేవలం price లేదా camera ఆధారంగా కాకుండా,
+              quality • experience • editing • data safety • final delivery
+              ఆధారంగా ఎంచుకోవడం ముఖ్యం.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-6 md:grid-cols-2">
+            {BEFORE_YOU_BOOK.map((v) => (
+              <article key={v.id} className="flex flex-col gap-4">
+                <LiteYouTube id={v.id} title={v.title} />
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                    {v.num}
+                  </p>
+                  <h3 className="font-medium text-foreground">{v.title}</h3>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-6xl px-6 pb-24 md:pb-32">
+        <h2 className="font-display text-4xl leading-tight text-foreground sm:text-5xl">
+          Recent wedding films.
+        </h2>
         {films.length === 0 ? (
           <p className="py-16 text-center text-sm text-muted-foreground">
             Films are being prepared — check back soon.
           </p>
         ) : (
           <div className="grid gap-10 md:grid-cols-2 md:gap-6">
-            {films.map((film) => (
-              <div key={film.id} className="flex flex-col gap-3">
-                <FilmCard src={film.src} poster={film.poster} />
-                {film.title.trim() ? (
-                  <h2 className="text-sm font-medium text-foreground">
-                    {film.title}
-                  </h2>
-                ) : null}
-                {film.description.trim() ? (
-                  <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
-                    {film.description}
-                  </p>
-                ) : null}
-              </div>
-            ))}
+            {films.map((film) => {
+              const ytId = youtubeVideoId(film.youtube);
+              return (
+                <div key={film.id} className="flex flex-col gap-3">
+                  {ytId ? (
+                    <LiteYouTube
+                      id={ytId}
+                      title={film.title.trim() || "Wedding film by Kamakshi Cinema Photography"}
+                    />
+                  ) : (
+                    <FilmCard src={film.src} poster={film.poster} />
+                  )}
+                  {film.title.trim() ? (
+                    <h2 className="text-sm font-medium text-foreground">
+                      {film.title}
+                    </h2>
+                  ) : null}
+                  {film.description.trim() ? (
+                    <p className="text-pretty text-sm leading-relaxed text-muted-foreground">
+                      {film.description}
+                    </p>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         )}
 

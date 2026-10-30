@@ -9,6 +9,7 @@ export type Film = {
   poster: string | null;
   title: string;
   description: string;
+  youtube: string | null;
   home: boolean;
   createdAt: number;
 };
@@ -48,6 +49,7 @@ const SCHEMA = [
     poster TEXT,
     title TEXT NOT NULL DEFAULT '',
     description TEXT NOT NULL DEFAULT '',
+    youtube TEXT,
     home INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL
   )`,
@@ -78,6 +80,13 @@ const MIGRATIONS = [
       "UPDATE gallery SET home = 1",
     ],
   },
+  {
+    version: "film-youtube",
+    columns: [
+      { table: "films", column: "youtube", ddl: "ALTER TABLE films ADD COLUMN youtube TEXT" },
+    ],
+    after: [],
+  },
 ];
 
 /**
@@ -93,24 +102,52 @@ async function claimMarker(db: Awaited<ReturnType<typeof getClient>>, key: strin
   return claimed.rows.length > 0;
 }
 
+/**
+ * Non-claiming workers (build workers, etc.) must not SELECT a new column
+ * before the claiming worker lands its ALTER. Poll the live schema briefly;
+ * if the claimer wedged, apply the idempotent DDL directly like a claimer.
+ */
+async function waitForColumn(db: Awaited<ReturnType<typeof getClient>>, table: string, column: string): Promise<void> {
+  const deadline = Date.now() + 15_000;
+  for (;;) {
+    const cols = await db.execute(`PRAGMA table_info(${table})`);
+    if (cols.rows.some((row) => String(row.name) === column)) return;
+    if (Date.now() > deadline) {
+      try {
+        await db.execute(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`);
+      } catch {
+        // Column might have appeared concurrently; verify once more.
+      }
+      return;
+    }
+    await delay(300);
+  }
+}
+
 async function ensureSchema() {
   const db = getClient();
   for (const sql of SCHEMA) {
     await db.execute(sql);
   }
 
-  if (await claimMarker(db, "home-flags")) {
-    for (const [table, column, ddl] of MIGRATIONS[0].columns.map((c) => [c.table, c.column, c.ddl] as const)) {
+  for (const migration of MIGRATIONS) {
+    const claimed = await claimMarker(db, migration.version);
+    for (const { table, column, ddl } of migration.columns) {
       const cols = await db.execute(`PRAGMA table_info(${table})`);
       if (cols.rows.some((row) => String(row.name) === column)) continue;
-      await db.execute(ddl);
+      if (claimed) {
+        await db.execute(ddl);
+      } else {
+        await waitForColumn(db, table, column);
+        break;
+      }
     }
-    for (const sql of MIGRATIONS[0].after) {
+    for (const sql of migration.after) {
       await db.execute(sql);
     }
     await db.execute({
-      sql: "UPDATE cms_meta SET value = ? WHERE key = 'home-flags'",
-      args: [new Date().toISOString()],
+      sql: "UPDATE cms_meta SET value = ? WHERE key = ?",
+      args: [new Date().toISOString(), migration.version],
     });
   }
 }
@@ -160,7 +197,10 @@ export function getDb() {
       throw error;
     });
   }
-  return Promise.resolve(getClient());
+  // Schema and seeding must finish before any caller touches the DB —
+  // otherwise reads race a not-yet-applied migration (the "no such column"
+  // build failures that previously looked like stale caches).
+  return ready.then(() => getClient());
 }
 
 const TRANSIENT =
@@ -192,7 +232,7 @@ export async function withRetry<T>(
 export async function listFilms(): Promise<Film[]> {
   return withRetry(async (db) => {
     const res = await db.execute(
-      "SELECT id, position, src, poster, title, description, home, created_at FROM films ORDER BY position ASC, id ASC",
+      "SELECT id, position, src, poster, title, description, youtube, home, created_at FROM films ORDER BY position ASC, id ASC",
     );
     return res.rows.map((row) => ({
       id: Number(row.id),
@@ -201,6 +241,7 @@ export async function listFilms(): Promise<Film[]> {
       poster: row.poster === null ? null : String(row.poster),
       title: String(row.title),
       description: String(row.description),
+      youtube: row.youtube === null || row.youtube === undefined ? null : String(row.youtube),
       home: Number(row.home) === 1,
       createdAt: Number(row.created_at),
     }));
@@ -210,7 +251,7 @@ export async function listFilms(): Promise<Film[]> {
 export async function getFilm(id: number): Promise<Film | null> {
   return withRetry(async (db) => {
     const res = await db.execute({
-      sql: "SELECT id, position, src, poster, title, description, home, created_at FROM films WHERE id = ?",
+      sql: "SELECT id, position, src, poster, title, description, youtube, home, created_at FROM films WHERE id = ?",
       args: [id],
     });
     const row = res.rows[0];
@@ -222,6 +263,7 @@ export async function getFilm(id: number): Promise<Film | null> {
       poster: row.poster === null ? null : String(row.poster),
       title: String(row.title),
       description: String(row.description),
+      youtube: row.youtube === null || row.youtube === undefined ? null : String(row.youtube),
       home: Number(row.home) === 1,
       createdAt: Number(row.created_at),
     };

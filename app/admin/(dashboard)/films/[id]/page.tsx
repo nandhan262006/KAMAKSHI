@@ -107,6 +107,23 @@ function DetailsForm({
             className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
           />
         </label>
+        <label className="flex flex-col gap-1.5 text-sm">
+          <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">
+            YouTube link (optional)
+          </span>
+          <input
+            type="text"
+            name="youtube"
+            defaultValue={film.youtube ?? ""}
+            placeholder="https://www.youtube.com/watch?v=…"
+            className="rounded-xl border border-stone-300 bg-[#FAF9F6] px-4 py-3 text-sm outline-none focus:border-stone-900 focus:bg-white"
+          />
+          <span className="text-xs text-stone-400">
+            Pastes a YouTube video → the public films page shows a YouTube
+            preview for this film instead of the raw upload. Leave empty to
+            keep the raw preview.
+          </span>
+        </label>
         <div className="pt-1">
           <button
             type="submit"

@@ -178,7 +178,7 @@ async function Films() {
           Recent wedding films.
         </h2>
         <div className="mt-12 grid gap-10 md:grid-cols-2 md:gap-6">
-          {films.map((film) => (
+          {films.slice(0, 4).map((film) => (
             <div key={film.id} className="flex flex-col gap-3">
               <FilmCard src={film.src} poster={film.poster} />
               {film.title.trim() ? (

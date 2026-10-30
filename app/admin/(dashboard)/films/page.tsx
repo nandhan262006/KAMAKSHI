@@ -54,6 +54,13 @@ async function FilmsContent() {
         <FilmCreateForm />
       </details>
 
+      <p className="text-xs text-stone-500">
+        Home page shows the first <strong>4</strong> films marked ON HOME — replace
+        them with the toggle and Replace video. Films with a
+        <strong> YouTube link</strong> show as YouTube previews on the public
+        films page instead of the raw upload.
+      </p>
+
       <FilmList films={films} />
     </div>
   );
