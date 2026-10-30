@@ -38,7 +38,7 @@ export function GoogleReviews() {
       </div>
       <div className="mt-10 min-h-[380px] rounded-2xl border border-border bg-background">
         <div
-          className="elfsight-app-d21b47ed-4217-4d3c-a582-ee83d04fc082"
+          className="elfsight-app-4de03da0-51ed-4b75-a83a-631a14b0b95a"
           data-elfsight-app-lazy
         />
       </div>
